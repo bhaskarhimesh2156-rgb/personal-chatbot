@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operation Strix: Chat Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            /* --- Spy x Family Palette --- */
+            --anya-pink: #f8c8dc;
+            --anya-hair: #ffbfcc;
+            --loid-green: #4f7966;
+            --yor-red: #ba1a1a;
+            --eden-gold: #d4af37;
+            --paper-bg: #fdfbf7;
+            --text-dark: #2c2c2c;
+            --retro-shadow: 4px 4px 0px rgba(44, 44, 44, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e6e0d4;
+            background-image: 
+                linear-gradient(135deg, #d8d0c0 25%, transparent 25%), 
+                linear-gradient(225deg, #d8d0c0 25%, transparent 25%), 
+                linear-gradient(45deg, #d8d0c0 25%, transparent 25%), 
+                linear-gradient(315deg, #d8d0c0 25%, transparent 25%);
+            background-position: 10px 0, 10px 0, 0 0, 0 0;
+            background-size: 40px 40px;
+            background-repeat: repeat;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 480px;
+            height: 85vh;
+            background-color: var(--paper-bg);
+            border: 4px solid var(--text-dark);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 10px 10px 0px var(--loid-green);
+            overflow: hidden;
+        }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, transparent 50%, var(--eden-gold) 50%);
+            z-index: 2;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background-color: var(--loid-green);
+            color: #fff;
+            border-bottom: 4px solid var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 3;
+        }
+
+        .header-text { display: flex; flex-direction: column; }
+        .mission-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: var(--eden-gold);
+            text-transform: uppercase;
+        }
+        .character-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .stella-star {
+            font-size: 2rem;
+            color: var(--eden-gold);
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            animation: spin 6s linear infinite;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Increased gap for names */
+            background-image: radial-gradient(var(--anya-pink) 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-color: #fff;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 18px;
+            font-size: 1rem;
+            line-height: 1.4;
+            position: relative;
+            border: 2px solid var(--text-dark);
+            box-shadow: var(--retro-shadow);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0.8);
+            word-wrap: break-word;
+        }
+
+        /* Ensure markdown formatting inside bubbles looks good */
+        .message p { margin-bottom: 8px; }
+        .message ul, .message ol { margin-left: 20px; }
+        .message strong { color: var(--yor-red); }
+
+        .message.bot {
+            align-self: flex-start;
+            background-color: var(--anya-pink);
+            color: var(--text-dark);
+            border-radius: 20px 20px 20px 0;
+            font-weight: 700;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--loid-green);
+            color: #fff;
+            border-radius: 20px 20px 0 20px;
+        }
+
+        .message.bot::before {
+            content: "ANYA";
+            position: absolute;
+            top: -22px; left: 0;
+            font-size: 0.7rem; font-weight: 800;
+            color: var(--text-dark);
+            font-family: 'Cinzel', serif;
+        }
+
+        .message.user::before {
+            content: "AGENT TWILIGHT";
+            position: absolute;
+            top: -22px; right: 0;
+            font-size: 0.7rem; font-weight: 800;
+            color: var(--loid-green);
+            font-family: 'Cinzel', serif;
+        }
+
+        .input-area {
+            padding: 15px;
+            background-color: var(--paper-bg);
+            border-top: 4px solid var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--text-dark);
+            border-radius: 12px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
+            background: #fff;
+        }
+        .chat-input:focus {
+            border-color: var(--yor-red);
+            background-color: #fff5f5;
+        }
+
+        .send-btn {
+            background-color: var(--yor-red);
+            color: white;
+            border: 2px solid var(--text-dark);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: var(--retro-shadow);
+            transition: transform 0.1s;
+            text-transform: uppercase;
+            font-family: 'Cinzel', serif;
+        }
+        .send-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(44, 44, 44, 0.15); }
+        .send-btn:hover { background-color: #d62222; }
+        .send-btn:disabled { background-color: #888; cursor: not-allowed; }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .peanut-decor {
+            position: absolute; bottom: 80px; right: 20px;
+            font-size: 3rem; opacity: 0.2;
+            pointer-events: none; transform: rotate(-20deg);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-text">
+                <span class="mission-title">Mission: Chat</span>
+                <span class="character-name">FAMILY COMMS</span>
+            </div>
+            <div class="stella-star">★</div>
+        </div>
+
+        <div class="chat-messages" id="chat-box">
+            <div class="message bot">
+                Waku Waku! (Excited!) <br>
+                Operation Strix is active. Do you have any peanuts? 🥜
+            </div>
+            
+             <div class="peanut-decor">🥜</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" class="chat-input" placeholder="Type a top secret message...">
+            <button id="send-btn" class="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // Function to create and append messages
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', sender);
+            
+            // If it's the bot, parse Markdown (makes bold/lists work)
+            // If user, just text (security best practice)
+            if (sender === 'bot') {
+                msgDiv.innerHTML = marked.parse(text);
+            } else {
+                msgDiv.textContent = text;
+            }
+
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Function to handle sending logic
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // 1. Show User Message
+            appendMessage(text, 'user');
+            userInput.value = '';
+            
+            // Disable input while waiting
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.textContent = "...";
+
+            try {
+                // 2. Send to Python Backend
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+
+                // 3. Show Bot Response
+                appendMessage(data.reply, 'bot');
+
+            } catch (error) {
+                console.error("Transmission Error:", error);
+                appendMessage("Communication severed! (Check console)", 'bot');
+            } finally {
+                // Re-enable input
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = "Send";
+                userInput.focus();
+            }
+        }
+
+        // Event Listeners
+        sendBtn.addEventListener('click', sendMessage);
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initial scroll
+        window.onload = function() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
